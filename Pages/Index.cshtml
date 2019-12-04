@@ -1,0 +1,78 @@
+﻿@page
+@using Microsoft.AspNetCore.Routing
+@using Microsoft.AspNetCore.Antiforgery
+@inject LinkGenerator LinkGenerator
+@inject IAntiforgery AntiForgery;
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h2>Technique 1: Posting individual values</h2>
+<div class="form-group">
+    <label for="FirstName">FirstName</label>
+    <input id="FirstName" class="form-control">
+</div>
+<div class="form-group">
+    <label for="LastName">FirstName</label>
+    <input id="LastName" class="form-control">
+</div>
+<button id="AddUser" class="btn btn-primary">Add User</button>
+
+<hr/>
+
+<h2>Technique 2: Posting entire form</h2>
+<form method="post" asp-page-handler="RawFormData" id="postDataForm">
+    <div class="form-group">
+        <label asp-for="Data.FirstName"></label>
+        <input asp-for="Data.FirstName" class="form-control">
+    </div>
+    <div class="form-group">
+        <label asp-for="Data.LastName"></label>
+        <input asp-for="Data.LastName" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Add User</button>
+</form>
+
+@section Scripts
+{
+    <script>
+        // Posting individual field values
+        const addUserButton = document.getElementById('AddUser');
+        addUserButton.addEventListener('click', function() {
+            const firstNameField = document.getElementById('FirstName');
+            const lastNameField = document.getElementById('LastName');
+
+            const postUrl = '@LinkGenerator.GetUriByPage(HttpContext, handler: "IndividualFields")';
+            const formData = new FormData();
+            formData.append('FirstName', firstNameField.value);
+            formData.append('LastName', lastNameField.value);
+            
+            fetch(postUrl, {
+                method: 'post',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': '@AntiForgery.GetAndStoreTokens(HttpContext).RequestToken'
+                }
+            }).then(function(response) {
+                console.log(response);
+            });
+        });
+        
+        // Posting the entire form. This is the recommended way 
+        const postDataForm = document.getElementById('postDataForm');
+        postDataForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const postUrl = this.action;
+            const formData = new FormData(this);
+            
+            fetch(postUrl, {
+                method: 'post',
+                body: formData
+            }).then(function(response) {
+                console.log(response);
+            });
+        })
+    </script>
+}
